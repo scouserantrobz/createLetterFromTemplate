@@ -1,0 +1,151 @@
+<script>
+function createLetter(){
+  /* gather all the input values from the dialog into object data
+     if no error, pass to server side and on return display new
+     document link or error message
+  */
+  const [hvError, data] = checkInputs()
+  const opts = { 
+    "docName": getDocName(),
+    "replacePh": document.querySelector("#replaceOption").value
+  }
+  if ( hvError || opts.docName === "" ) return
+  document.querySelector("#btnCreate").classList.add("d-none")
+  document.querySelector("#btnCreating").classList.remove("d-none")
+  google.script.run
+    .withSuccessHandler( function( docId ){
+      if ( docId.slice(0,5) === "Sorry" ){
+        document.querySelector("#colLink").innerHTML = docId
+        return
+      }
+      const ahref = "https://docs.google.com/document/d/" + docId + "/edit"
+      document.querySelector("#newDocLink").setAttribute("href", ahref)
+      document.querySelector("#rowBtn").classList.add("d-none")
+      document.querySelector("#rowLink").classList.remove("d-none")
+    })
+    .withFailureHandler( "copyNewRecords", gsrError )
+    .gsCreateLetter( data, opts )
+}
+function getDocName(){
+  // get the input value for the new document, return name even if empty
+  const docName = document.querySelector("#docName").value
+  if ( docName === "" ){
+    document.querySelector("#docName").focus()
+    document.querySelector("#docName").classList.add("error")
+    document.querySelector("#divErrDocName").classList.remove("d-none")
+  } else {
+    document.querySelector("#docName").classList.remove("error")
+    document.querySelector("#divErrDocName").classList.add("d-none")
+  }
+  return docName
+}
+function checkInputs(){
+  /*  cycle through inputs, grab value and check if field is required then it actually has a value
+  return hvError - if any required field is empty, return true, else false
+  and    data - object of based on inputs; key is data-field value (placeholder code), code is replacement value
+  */
+  const dataEles = document.querySelectorAll(".data")
+  const data = {}
+  let hvError = false
+  dataEles.forEach( ele => {
+    if ( [ ...ele.classList].includes("Required") > 0 ){
+      if ( ele.value === "" ){
+        ele.classList.add("error")
+        hvError = true
+      } else {
+        ele.classList.remove("error")
+      }
+    }
+    // check if autoinc value is an integer, check result affects hvError
+    if ( ele.dataset.field === "{{AUTOINC}}" ){
+      if ( (ele.value || "") !== "" && Number.isInteger(ele.value) === false ){ // autoinc isn't an integer
+        ele.classList.add("error")
+        hvError = true
+      } else {
+        ele.classList.remove("error")
+      }
+    }
+    if (!hvError){
+      data[ele.dataset.field] = ele.value
+    }
+  })  
+  if ( hvError ){
+    document.querySelector("#divErrMsg").classList.remove("d-none")
+  } else {
+    document.querySelector("#divErrMsg").classList.add("d-none")
+  }
+  return [hvError, data]
+}
+function gsrError( funcName, errMsg ){
+  // report error on return from server side code
+  console.log( "Error from " + funcName )
+  console.log( errMsg )
+  const ele = document.querySelector("#divGsErrMsg")
+  ele.textContent = errMsg
+  ele.classList.remove("d-none")
+}
+function setSheet(){
+  /* if we have a sheet id entered, send it server side to be set as a script property
+     if id is valid and it's set, then read config data from the sheet and display input
+     html based on inputs html template
+  */
+  const sheetId = document.querySelector("#sheetId").value
+  if ( sheetId === "" ){
+    document.getElementById("sheetId").focus()
+    return
+  }
+  // get the ID or doc name, find it and check config file exist in correct format
+  google.script.run
+    .withSuccessHandler( function( wasSheetIdSet ){
+      console.log( `back from gsGetInputs: ${wasSheetIdSet}`)
+      if ( wasSheetIdSet === "set" ){
+        document.querySelector("#divNoSheet").classList.add("d-none")
+        getInputHTML( sheetId )
+      } else {
+        document.querySelector("#divNoSheet").classList.remove("d-none")
+        document.querySelector("#errMsg").textContent = wasSheetIdSet
+        document.querySelector("#divInputs").innerHTML = ""
+      }      
+    })
+    .withFailureHandler( "gsGetInputs", gsrError )
+    .gsSetSheet( sheetId )
+}
+function getInputHTML( sheetId ){
+  // passes sheetId server side to create input HTML and display on dialog page
+  google.script.run
+    .withSuccessHandler( function( pageHTML ){
+      console.log( "back from gsGetInputs: ")
+      document.querySelector("#divInputs").innerHTML = pageHTML
+      const inps = document.querySelectorAll(".Required")
+      inps.forEach( inp => {
+        inp.addEventListener("change", checkInputs)
+      })
+      try{
+        document.querySelector(`[data-field="{{AUTOINC}}"]`).setAttribute("title","This value has to be an integer.")
+      } catch(e) {
+        // no autonoincnumber field
+      }
+    })
+    .withFailureHandler( "gsGetInputs", gsrError )
+    .gsGetInputs( sheetId )
+}
+/*
+  run on load...
+*/
+function onLoad(){
+  // on loading the dialog, check for a sheet id value - if exists load input HTML
+  const sheetId = document.querySelector("#sheetId").value
+  console.log(`sheetId:${sheetId}`)
+  if ( sheetId !== "" ){
+    // we have an ID so load inputs
+    getInputHTML( sheetId )
+  } else{
+    document.querySelector("#divNoSheet").classList.remove("d-none")
+    document.getElementById("sheetId").focus()
+    return
+  }
+}
+document.querySelector("#btnSetSheet").addEventListener("click", setSheet)
+document.querySelector("#docName").addEventListener("input", getDocName)
+onLoad()
+</script>
