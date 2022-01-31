@@ -1,0 +1,32 @@
+<style>
+  .tableFixHead {
+    overflow-y: auto;
+    height: 260px;
+  }
+  .tableFixHead thead th {
+    position: sticky;
+    top: 0;
+  }
+  .rowNum0, rowNum1{
+    border-bottom: .1rem lightgrey solid;
+  }
+  . colRight{
+    text-align:right;
+  }
+  .data{
+    border-bottom: 0.15rem grey solid;
+    border-radius: 0;
+    border-top: 0;
+    border-right: 0;
+    border-left: 0;
+  }
+  .Required{
+    border-bottom: .15rem darkblue solid !important;
+  }
+  .error{
+    background-color: #F4CCCC;
+  }
+  .container{
+    padding:0;
+  }
+</style>
