@@ -1,0 +1,91 @@
+
+          <div class="container tableFixHead" id="divInputs">
+            <table class="table table-sm">
+              <thead style="border:0">
+                <tr style="vertical-align: bottom">
+                  <th style="background-color:antiquewhite;border-color:antiquewhite">
+                    <strong>Placeholder</strong>
+                  </th>
+                  <th style="background-color:antiquewhite;border-color:antiquewhite">
+                    <strong>Description</strong>
+                  </th>
+                  <th style="background-color:antiquewhite;border-color:antiquewhite">
+                    <strong>Replace with</strong>
+                  </th>
+                </tr>
+              </thead>
+            <? 
+              let currentSel = "";
+              let rowNum = 0
+              data.forEach( row => {
+                if ( row[0] === "Text" || row[0] === "Date" || row[0] === "Time" ){
+                  if ( currentSel !== "" ){
+            ?>
+                    <!--  end of the current select element -->
+                    </select>
+                    </td>
+                  </tr>
+            <?
+                    rowNum = rowNum === 0 ? 1 : 0
+                    currentSel = ""
+                  }
+            ?>
+                  <tr style="vertical-align: middle">
+                    <td class="colRight">
+                      <?= row[1] ?>
+                    </td>
+                    <td class="colRight">
+                      <?!= row[3] ?>
+                    </td>
+                    <td>
+                      <input type="text" class="form-control data <?= row[5] ?>" data-field="<?= row[1] ?>" value="<?= row[4] ?>" />
+                    </td>
+                  </tr>
+              <?
+                  rowNum = rowNum === 0 ? 1 : 0
+                } else if ( row[0] === "Drop down list" ){
+                  if ( currentSel === "" ){
+                    currentSel = row[1]
+              ?>
+                <!--  add the select line -->
+                  <tr style="vertical-align: middle">
+                    <td class="colRight">
+                      <?= row[1] ?>
+                    </td>
+                   <td class="colRight">
+                      <?!= row[3] ?>
+                    </td>
+                    <td>
+                      <select class="form-control data <?= row[5] ?>" data-field="<?= row[1] ?>">
+                        <option value="">(Please select)</option>
+                        <option value="<?= row[2] ?>" <?= row[6] ?>><?= row[2] ?></option>
+              <?  } else if ( row[1] === currentSel ){
+              ?>
+                    <!--  in the same select group so add option -->
+                        <option value="<?= row[2] ?>" <?= row[6] ?>><?= row[2] ?></option>
+              <?  } else {
+                    currentSel = row[1]
+                    rowNum = rowNum === 0 ? 1 : 0
+              ?>
+                  <!--  we have different select, so we need to close and restart -->
+                      </select>
+                    </td>
+                  </tr>
+                  <tr style="vertical-align: middle">
+                    <td class="colRight">
+                      <?= row[1] ?>
+                    </td>
+                    <td class="colRight">
+                      <?= row[3] ?>
+                    </td>
+                    <td>
+                      <select class="form-control data <?= row[5] ?>" data-field="<?= row[1] ?>">
+                        <option value="">(Please select)</option>
+                        <option value="<?= row[2] ?>" <?= row[6] ?>><?= row[2] ?></option>
+              <?
+                  }
+                }
+              })
+            ?>
+            </table>
+          </div>
